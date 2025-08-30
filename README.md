@@ -7,6 +7,8 @@ We’re developing a **scalable, modular, and real-time conversations platform**
 
 ---
 
+[![OSCI-Project-Banner.png](https://i.postimg.cc/76mJvBmF/OSCI-Project-Banner.png)](https://postimg.cc/8JfzMb84)
+
 ## 🧠 Goal
 
 Our objective is to design and develop a fully functional **real-time chat & discussions system** that goes beyond traditional apps like Discord.  
@@ -35,22 +37,97 @@ This feature will support structured conversations, threading, roles & permissio
 
 Once implemented, the project will follow this modular structure:
 
+### Frontend Folder Structure
 ```
-/chattersapce
-├── backend/
-│   ├── models/
-│   ├── controllers/
-│   ├── routes/
-│   ├── sockets/
-│   └── server.js
-├── frontend/
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   └── App.jsx
-├── utils/
-├── .env.example
-└── README.md
+client/
+├─ public/
+│  └─ vite.svg
+├─ src/
+│  ├─ assets/
+│  │  └─ react.svg
+│  ├─ components/
+│  │  ├─ about.jsx
+│  │  ├─ chatbot.jsx
+│  │  ├─ footer.jsx
+│  │  ├─ Footer.md
+│  │  ├─ navbar.jsx
+│  │  ├─ ScrollToTop.jsx
+│  │  ├─ ScrollToTopLink.jsx
+│  │  └─ testimonilas.jsx
+│  ├─ pages/
+│  │  ├─ AboutPage.jsx
+│  │  ├─ AuthPage.jsx
+│  │  ├─ ChatPage.jsx
+│  │  ├─ CodeOfConductPage.jsx
+│  │  ├─ ContributingPage.jsx
+│  │  ├─ DocumentationPage.jsx
+│  │  ├─ FeatureRequestsPage.jsx
+│  │  ├─ FeaturesPage.jsx
+│  │  ├─ GettingStartedPage.jsx
+│  │  ├─ IssuesPage.jsx
+│  │  ├─ LandingPage.jsx
+│  │  ├─ LicensePage.jsx
+│  │  ├─ login.jsx
+│  │  ├─ PrivacyPolicyPage.jsx
+│  │  ├─ signup.jsx
+│  │  ├─ TechStackPage.jsx
+│  │  └─ TermsOfServicePage.jsx
+│  ├─ App.css
+│  ├─ App.jsx
+│  ├─ index.css
+│  ├─ main.jsx
+│  └─ theme.css
+├─ temp-client/
+│  ├─ public/
+│  │  └─ vite.svg
+│  ├─ src/
+│  │  ├─ assets/
+│  │  │  └─ react.svg
+│  │  ├─ App.css
+│  │  ├─ App.jsx
+│  │  ├─ index.css
+│  │  └─ main.jsx
+│  ├─ .gitignore
+│  ├─ eslint.config.js
+│  ├─ index.html
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ README.md
+│  └─ vite.config.js
+├─ .env.example
+├─ .gitignore
+├─ App.jsx
+├─ eslint.config.js
+├─ index.html
+├─ package-lock.json
+├─ package.json
+├─ postcss.config.js
+├─ README.md
+├─ tailwind.config.js
+└─ vite.config.js
+
+```
+
+### Backend Folder Structure
+```
+server/
+├─ config/
+│  ├─ db.js
+│  └─ emailConfig.js
+├─ controllers/
+│  └─ authController.js
+├─ middleware/
+│  └─ auth.js
+├─ models/
+│  └─ User.js
+├─ routes/
+│  └─ authRoutes.js
+├─ .env.example
+├─ .gitignore
+├─ eslint.config.mjs
+├─ package-lock.json
+├─ package.json
+└─ server.js
 ```
 
 > Note: This repo currently contains only the README, contribution guide, and templates. All folders will be created during development milestones.
@@ -153,3 +230,16 @@ Then open a Pull Request on GitHub.
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
+
+
+## 🚀 Local Setup Instructions
+
+Follow these steps to run the project locally:
+
+1. **Run these commands in terminal**
+   ```bash
+   git clone https://github.com/Chanchal2004/ChatterSpace.git
+   cd ChatterSpace
+   npm install
+   npm run dev
+

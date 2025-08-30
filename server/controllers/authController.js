@@ -1,5 +1,9 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const crypto=require("crypto");
+const {sendMail}=require("../config/emailConfig");
+const { route } = require('../routes/authRoutes');
+const nodemailer = require('nodemailer');
 
 // Function to generate and send JWT token
 const sendToken = (user, res) => {
@@ -12,7 +16,7 @@ const sendToken = (user, res) => {
         secure: process.env.NODE_ENV === 'production', 
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
+    });
 
     res.status(200).json({
     success: true,
@@ -23,7 +27,7 @@ const sendToken = (user, res) => {
       email: user.email,
     },
   });
-}
+};
 
 // @desc Sign up 
 // @route POST /api/auth/signup
@@ -54,6 +58,7 @@ const signupUser = async (req, res) => {
         });
 
         sendToken(user, res);
+        
 
     }catch(err){
         console.error(err);
@@ -89,10 +94,31 @@ const loginUser = async (req, res) => {
         }
 
         sendToken(user, res);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Server error" });
-    }
+  } catch (err) {
+  console.error("❌ Signup error:", err);
+
+  // Handle duplicate key errors (username or email already exists)
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    return res.status(400).json({
+      success: false,
+      message: `${field} already exists`
+    });
+  }
+
+  // Handle validation errors
+  if (err.name === "ValidationError") {
+    const messages = Object.values(err.errors).map(val => val.message);
+    return res.status(400).json({
+      success: false,
+      message: messages.join(", ")
+    });
+  }
+
+  // Default: unknown server error
+  res.status(500).json({ success: false, message: "Internal server error" });
+}
+
 };
 
 
@@ -109,49 +135,49 @@ const logoutUser = async (req, res) => {
 // by Samay2006
 // @desc Update user details (name, username, email)
 // @route   PATCH /update/:id
-const updateuser=async(req,res)=>{
+const updateuser = async(req,res) => {
 try {
-    const  {uname,uusername,uemail}=req.body;
-    const {id}=req.params;
-if(!(uname ||uusername||uemail)){
-    return res.status(400).json({success:false,message:"fill at least one of them!"})
-}
+    const  {uname, uusername, uemail} = req.body;
+    const {id} = req.params;
+    if(!(uname || uusername || uemail)){
+        return res.status(400).json({success:false, message:"fill at least one of them!"});
+    }
 
-// Updating only the values that are provided
-const updateFields = {};
-if (uemail) updateFields.email = uemail;
-if (uname) updateFields.name = uname;
-if (uusername) updateFields.username = uusername;
+    // Updating only the values that are provided
+    const updateFields = {};
+    if (uemail) updateFields.email = uemail;
+    if (uname) updateFields.name = uname;
+    if (uusername) updateFields.username = uusername;
 
-const user = await User.findByIdAndUpdate(
-    id,
-    { $set: updateFields },
-    { new: true }
-).select("-password");
+    const user = await User.findByIdAndUpdate(
+        id,
+        { $set: updateFields },
+        { new: true }
+    ).select("-password");
 
-// if user not found
-if(!user){
-    return res.status(404).json({success:false,message:"User not found!"})
-}
-res.status(200).json({success:true,message:"Details updated successfully", data:user})
+    // if user not found
+    if(!user){
+        return res.status(404).json({success:false, message:"User not found!"});
+    }
+    res.status(200).json({success:true, message:"Details updated successfully", data:user});
 
 
 } catch (error) {
-  return  res.status(500).json({success:false,message:error.message})
+  return  res.status(500).json({success:false, message:error.message});
 
 }
-}
+};
 // by Samay2006
 // @desc    Get user details by ID
 // @route   GET /user/:id
-const getuserbyid=async(req,res)=>{
+const getuserbyid = async(req, res) => {
     try {
-        const {id}=req.params;
-        const user=await User.findById(id).select("-password");
+        const {id} = req.params;
+        const user = await User.findById(id).select("-password");
         if(!user){
-        return res.status(404).json({success:false,message:"User not found!"})
-}
-res.status(200).json({success:true,message:"User details fetched successfully", data:user})
+        return res.status(404).json({success:false, message:"User not found!"});
+    }
+    res.status(200).json({success:true, message:"User details fetched successfully", data:user});
 
     } catch (error) {
         return res.status(500).json({
@@ -160,20 +186,20 @@ res.status(200).json({success:true,message:"User details fetched successfully", 
 
         });
     }
-}
+};
 // by Samay2006
 // @desc Delete user
 // @route DELETE /user/:id
-const deleteuser=async (req,res) => {
+const deleteuser = async (req, res) => {
 try {
-    const {id}=req.params;
-    const user=await User.findByIdAndDelete(id)
+    const {id} = req.params;
+    const user = await User.findByIdAndDelete(id);
     
     if(!user){
         return res.status(404).json({
     success:false,
     message:"User not found!"
-    })
+    });
     }
     
     res.status(200).json({
@@ -185,10 +211,82 @@ try {
          return res.status(500).json({
             success:false,
             message:error.message,
-})
+});
 }
+};
+// by vivek724464
+// @desc forgot password
+// @routr /forgot-password
+
+const forgotPassword=async(req,res)=>{
+    try{
+        const {email}=req.body;
+        const user=await User.findOne({email:email});
+        if (!user) return res.status(404).json({ success:false, message: "User not found" });
+          //Generate reset token
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; 
+        await user.save();
+
+          // Reset URL
+        const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+        await sendMail(
+            email,
+            "Password Reset - ChatterSpace",
+            `Click here to reset your password: ${resetUrl}`
+        ) 
+         return res.status(200).json({
+            success: true,
+            message: "Password reset link sent to your email"
+        });
+    }catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:error.message,
+         })
+    }
+}
+
+// by vivek724464
+// @desc reset password
+// @routr /reset-password/:token
+
+const resetPassword = async (req, res) => {
+    try{
+        const {token}=req.params;
+        const {password}=req.body;
+
+        const user = await User.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpire: { $gt: Date.now() }, 
+    });
+
+    if (!user) return res.status(400).json({ success:false ,message: "Invalid or expired token" });
+
+     // Update password
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+
+    await user.save();
+    await sendMail(
+            user.email,
+            "Password Reset confirmation - ChatterSpace",
+            "Password reset successfully"
+        ) 
+    return res.status(200).json({ success:true, message: "Password reset successful" });
     
+
+
+    }catch (error){
+        return res.status(500).json({
+            success:false,
+            message:error.message
+        })
+    }
 }
+
 
 
 module.exports = {
@@ -198,4 +296,6 @@ module.exports = {
     updateuser,
     getuserbyid,
     deleteuser,
+    forgotPassword,
+    resetPassword
 }
